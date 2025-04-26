@@ -1,6 +1,6 @@
 {
     "name": "vscode-lark",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "publisher": "dirk-thomas",
     "engines": {
         "vscode": "^1.2.0"
@@ -19,6 +19,10 @@
     "bugs": {
         "url": "https://github.com/dirk-thomas/vscode-lark/issues"
     },
+    "main": "./extension.js",
+    "activationEvents": [
+        "onLanguage:lark"
+    ],
     "contributes": {
         "languages": [
             {
