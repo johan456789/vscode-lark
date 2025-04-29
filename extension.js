@@ -110,8 +110,8 @@ async function validateTextDocument(document, diagnosticCollection) {
     }
 
     // Detect undefined symbols and report errors
-    const termRe = new RegExp(`${SYMBOL_PREFIX}${TERM_BODY}\\s*:`);
-    const ruleRe = new RegExp(`${SYMBOL_PREFIX}${RULE_BODY}\\s*:`);
+    const termRe = new RegExp(`${SYMBOL_PREFIX}${TERM_BODY}${SYMBOL_SUFFIX}\\s*:`);
+    const ruleRe = new RegExp(`${SYMBOL_PREFIX}${RULE_BODY}${SYMBOL_SUFFIX}\\s*:`);
     for (let i = 0; i < document.lineCount; i++) {
         const text = document.lineAt(i).text;
         // skip directive lines and comments
@@ -121,6 +121,7 @@ async function validateTextDocument(document, diagnosticCollection) {
         let searchText = text;
         const termDefMatch = termRe.exec(text);
         const ruleDefMatch = ruleRe.exec(text);
+        const defHeadMatch = /^\s*([^:\s]+)\s*:/.exec(text); // match text before ':'
         let offset = 0;
         if (termDefMatch || ruleDefMatch) {
             const colonIndex = text.indexOf(':');
@@ -128,7 +129,15 @@ async function validateTextDocument(document, diagnosticCollection) {
                 offset = colonIndex + 1;
                 searchText = text.slice(offset);
             }
+        } else if (defHeadMatch) {
+            // Report error for invalid definition head before ':'
+            const head = defHeadMatch[1];
+            const start = text.indexOf(head);
+            const end = start + head.length;
+            const range = new vscode.Range(i, start, i, end);
+            diagnostics.push(new vscode.Diagnostic(range, `Invalid definition name '${head}'`, vscode.DiagnosticSeverity.Error));
         }
+
         // strip literal strings in quotes
         searchText = searchText.replace(/"[^"]*"/g, (match) => ' '.repeat(match.length));
         // strip comments and aliases
